@@ -34,7 +34,10 @@
 #define MAX_TIME_DRIFT  (2) // seconds
 
 // number of seconds without zephyr comms after which safety mode is entered
-#define ZEPHYR_TIMEOUT  3600 // 3600 s = 2 hrs
+#define ZEPHYR_TIMEOUT  7200 // 7200 s = 2 hrs
+
+// number of seconds between lost communication messages
+#define LOST_COMMS_FREQ 900 //send a lost comms warning every 15min
 
 // a statically-allocated log array is maintained by StratoCore
 #define LOG_ARRAY_SIZE  101
@@ -95,7 +98,7 @@ protected: // available to StratoCore and instrument classes
     virtual void EndOfFlightMode() = 0;
 
     // Pure virtual function definition for the instrument telecommand handler - returns ACK/NAK
-    virtual void TCHandler(Telecommand_t telecommand) = 0;
+    virtual bool TCHandler(Telecommand_t telecommand) = 0;
 
     // Pure virtual function definition for the instrument action handler
     virtual void ActionHandler(uint8_t action) = 0;
@@ -124,6 +127,7 @@ private: // available only to StratoCore
     void NextTelecommand();
 
     time_t last_zephyr;
+    time_t last_timeout_warning;
 
     uint8_t tcs_remaining;
 

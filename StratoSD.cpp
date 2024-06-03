@@ -4,17 +4,18 @@
  *  Created: June 2019
  *
  *  This file implements functions for use running the SD card
+ *  Updated 4/2024 for Teensy 4.1 using SD.h instead of SDFat.h
  */
 
 #include "StratoSD.h"
 #include "StratoGroundPort.h"
-#include <SdFat.h>
-#include <SdFatConfig.h>
+#include <SD.h>
+//#include <SdFatConfig.h>
 
 // globals for internal use
 bool sd_state = false;
 File file;
-SdFatSdio SD;
+//SdFatSdio SD;
 
 bool StartSD()
 {

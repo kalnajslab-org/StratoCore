@@ -8,7 +8,10 @@
  */
 
 #include "StratoCore.h"
-#include "TimeLib.h"
+#include <TimeLib.h>
+#include <Watchdog_t4.h>
+
+WDT_T4<WDT1> wdt;  // Use Watchdog Timer1 on Teensy 4.1
 
 StratoCore::StratoCore(Stream * zephyr_serial, Instrument_t instrument, Stream * dbg_serial)
     : zephyrTX(zephyr_serial, instrument)
@@ -45,34 +48,47 @@ void StratoCore::InitializeCore()
 // initialize the watchdog using the 1kHz LPO clock source to achieve a 10s WDOG
 void StratoCore::InitializeWatchdog()
 {
-    if ((RCM_SRS0 & RCM_SRS0_WDOG) != 0) {
-        ZephyrLogCrit("Reset caused by watchdog");
-    }
+    WDT_timings_t config;
+    //config.trigger = 5; /* in seconds, 0->128 for watchdog warning */
+    config.timeout = 10; /* in seconds, 0->128 for watchdog reboot */
+    //config.callback = myCallback;
+    wdt.begin(config);
+  
+    if (wdt.expired()) {
+         ZephyrLogCrit("Reset caused by watchdog");
+     }
 
-    noInterrupts(); // disable interrupts
 
-    // unlock
-    WDOG_UNLOCK = WDOG_UNLOCK_SEQ1; // unlock access to WDOG registers
-    WDOG_UNLOCK = WDOG_UNLOCK_SEQ2;
-    delayMicroseconds(1);
+    // if ((RCM_SRS0 & RCM_SRS0_WDOG) != 0) {
+    //     ZephyrLogCrit("Reset caused by watchdog");
+    // }
 
-    WDOG_PRESC = 0; // no prescaling of clock
+    // noInterrupts(); // disable interrupts
 
-    WDOG_TOVALH = 0x0000; // upper bits set to 0
-    WDOG_TOVALL = 0x2710; // 10000 counter at 1 kHz => 10s WDOG period
+    // // unlock
+    // WDOG_UNLOCK = WDOG_UNLOCK_SEQ1; // unlock access to WDOG registers
+    // WDOG_UNLOCK = WDOG_UNLOCK_SEQ2;
+    // delayMicroseconds(1);
 
-    // in one write, enable the watchdog using the 1kHz LPO clock source
-    WDOG_STCTRLH = 0x01D1;
+    // WDOG_PRESC = 0; // no prescaling of clock
 
-    interrupts(); // enable interrupts
+    // WDOG_TOVALH = 0x0000; // upper bits set to 0
+    // WDOG_TOVALL = 0x2710; // 10000 counter at 1 kHz => 10s WDOG period
+
+    // // in one write, enable the watchdog using the 1kHz LPO clock source
+    // WDOG_STCTRLH = 0x01D1;
+
+    // interrupts(); // enable interrupts
+
 }
 
 void StratoCore::KickWatchdog()
 {
-    noInterrupts();
-    WDOG_REFRESH = 0xA602;
-    WDOG_REFRESH = 0xB480;
-    interrupts();
+    // noInterrupts();
+    // WDOG_REFRESH = 0xA602;
+    // WDOG_REFRESH = 0xB480;
+    // interrupts();
+    wdt.feed();
 }
 
 void StratoCore::RunMode()
@@ -110,8 +126,11 @@ void StratoCore::RunRouter()
 
     // check for Zephyr no contact timeout
     if (now() > last_zephyr + ZEPHYR_TIMEOUT) {
-        ZephyrLogCrit("Zephyr comm loss timeout");
-        new_inst_mode = MODE_SAFETY;
+        if(now() > last_timeout_warning + LOST_COMMS_FREQ) {
+            ZephyrLogCrit("Zephyr comm loss timeout");
+            last_timeout_warning = now();
+            new_inst_mode = MODE_SAFETY;
+        }
     }
 }
 
