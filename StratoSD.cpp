@@ -19,7 +19,7 @@ File file;
 
 bool StartSD()
 {
-    if (SD.begin()) {
+    if (SD.begin(BUILTIN_SDCARD)) {
         sd_state = true;
     } else {
         sd_state = false;
