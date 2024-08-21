@@ -235,7 +235,7 @@ bool StratoCore::WriteFileTM(const char * file_prefix)
     if (NULL == file_prefix) return false;
 
     // prep the filename and check it was created correctly
-    if (63 < snprintf(filename, 64, "%s_%ld.dat", file_prefix, now())) return false;
+    if (63 < snprintf(filename, 64, "%s_%lld.dat", file_prefix, now())) return false;
 
     // get a pointer to the TM buffer and its size
     tm_size = zephyrTX.getTmBuffer(&tm_buffer);
