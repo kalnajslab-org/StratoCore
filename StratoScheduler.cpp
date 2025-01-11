@@ -68,7 +68,9 @@ void StratoScheduler::PrintSchedule()
     while (itr != NULL) {
         debug_serial->print(itr->action);
         debug_serial->print(",");
-        debug_serial->println(itr->time);
+        debug_serial->print(itr->time);
+        debug_serial->print(",");
+        debug_serial->println(itr->time-now());
         itr = itr->next;
     }
 }
