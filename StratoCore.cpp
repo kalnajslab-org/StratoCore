@@ -14,7 +14,11 @@
 WDT_T4<WDT1> wdt;  // Use Watchdog Timer1 on Teensy 4.1
 
 StratoCore::StratoCore(Stream * zephyr_serial, Instrument_t instrument, Stream * dbg_serial)
+#ifndef XMLDEBUG
     : zephyrTX(zephyr_serial, instrument)
+#else
+    : zephyrTX(zephyr_serial, instrument, dbg_serial)
+#endif
     , zephyrRX(zephyr_serial, instrument)
 {
     inst_mode = MODE_STANDBY; // always boot to standby
